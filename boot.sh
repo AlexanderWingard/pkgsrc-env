@@ -3,7 +3,7 @@
 export TARGET=`pwd`/target
 export SH=/bin/bash #shell must be BSD-compatible
 
-wget http://ftp.netbsd.org/pub/pkgsrc/current/pkgsrc.tar.gz
+curl -OL http://ftp.netbsd.org/pub/pkgsrc/current/pkgsrc.tar.gz
 tar xzvf pkgsrc.tar.gz
 rm pkgsrc.tar.gz
 
@@ -14,8 +14,18 @@ target/pkg/sbin/pkg_admin -K target/db/pkg fetch-pkg-vulnerabilities
 
 #Generate initial setup that can be sourced
 SETUP=`pwd`/setup.sh
-echo '#!/bin/bash'                                               >> $SETUP
-echo 'TARGET=$(dirname $(readlink -f ${BASH_SOURCE[0]}))/target' >> $SETUP
-echo 'TARGET_BIN=$TARGET/pkg/bin'                                >> $SETUP
-echo 'TARGET_SBIN=$TARGET/pkg/sbin'                              >> $SETUP
-echo 'export PATH=$TARGET_BIN:$TARGET_SBIN:$PATH'                >> $SETUP
+echo "#!/bin/bash
+pushd . > /dev/null
+TARGET=\"${BASH_SOURCE[0]}/target\";
+  while([ -h \"${SCRIPT_PATH}\" ]) do 
+    cd \"`dirname \"${SCRIPT_PATH}\"`\"
+    TARGET=\"$(readlink \"`basename \"${SCRIPT_PATH}\"`\")/target\"; 
+  done
+cd \"`dirname \"${SCRIPT_PATH}\"`\" > /dev/null
+TARGET=\"`pwd`/target\";
+popd  > /dev/null
+
+TARGET_BIN=$TARGET/pkg/bin
+TARGET_SBIN=$TARGET/pkg/sbin
+
+export PATH=$TARGET_BIN:$TARGET_SBIN:$PATH" > $SETUP
